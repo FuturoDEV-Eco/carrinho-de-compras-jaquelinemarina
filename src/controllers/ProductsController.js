@@ -39,6 +39,17 @@ class ProductsController {
             })
         }
     }
+    //-----------------------------------------------------------------------------------------------
+
+    // LISTANDO TODOS OS PRODUTOS
+    async getAll(request, response) {
+
+        const query = request.query
+
+        const products = await conexao.query('SELECT * FROM products')
+        response.status(200).json(products.rows)
+
+    }
 }
 
 module.exports = new ProductsController()
