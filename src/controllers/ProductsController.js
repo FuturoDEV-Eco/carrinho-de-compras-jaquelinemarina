@@ -100,6 +100,34 @@ class ProductsController {
             })
         }
     }
+    //-----------------------------------------------------------------------------------------------
+
+    // DELETANDO PRODUTO
+    async delete(request, response) {
+
+        try {
+            const id = request.params.id
+
+            const products = await conexao.query(`
+                DELETE FROM products
+                WHERE id = $1
+                `, [id])
+
+            // verifica se deletou alguma linha
+            if (products.rowCount === 0) {
+                return response.status(404).json(
+                    { mensagem: "O produto não existe ou já foi deletado." }
+                )
+            }
+            response.status(204).json() // retorna 204 (com sucesso mas sem conteúdo)
+
+        } catch (error) {
+            console.log(error)
+            response.status(500).json({
+                mensagem: "Ocorreu um erro ao tentar deletar um produto."
+            })
+        }
+    }
 }
 
 module.exports = new ProductsController()
