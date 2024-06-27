@@ -5,5 +5,6 @@ const productsRoutes = new Router()
 
 productsRoutes.post("/", productsController.create)
 productsRoutes.get("/", productsController.getAll)
+productsRoutes.get("/:id", productsController.getProductDetails)
 
 module.exports = productsRoutes
