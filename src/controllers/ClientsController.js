@@ -48,7 +48,6 @@ class ClientsController {
     async getAll(request, response) {
 
         try {
-
             // busca um cliente com filtro
             const query = request.query
 
@@ -67,13 +66,40 @@ class ClientsController {
                 const clients = await conexao.query('SELECT * FROM clients')
                 response.json(clients.rows)
             }
-
         } catch (error) {
             console.log(error)
             response.status(500).json({
                 mensagem: "Ocorreu um erro ao tentar listar os clientes."
             })
 
+        }
+    }
+    //-----------------------------------------------------------------------------------------------
+
+    // DELETANDO CLIENTE
+    async delete(request, response) {
+
+        try {
+            const id = request.params.id
+
+            const clients = await conexao.query(`
+                DELETE FROM clients
+                WHERE id = $1
+                `, [id])
+
+            // verifica se deletou alguma linha
+            if (clients.rowCount === 0) {
+                return response.status(404).json(
+                    { mensagem: "O cliente não existe ou já foi deletado." }
+                )
+            }
+            response.status(204).json() // retorna 204 (com sucesso mas sem conteúdo)
+
+        } catch (error) { // pega os erros não tratados
+            console.log(error)
+            response.status(500).json({
+                mensagem: "Ocorreu um erro ao tentar deletar um cliente."
+            })
         }
     }
 }
