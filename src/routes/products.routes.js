@@ -7,5 +7,6 @@ productsRoutes.post("/", productsController.create)
 productsRoutes.get("/", productsController.getAll)
 productsRoutes.get("/:id", productsController.getProductDetails)
 productsRoutes.delete("/:id", productsController.delete)
+productsRoutes.put("/:id", productsController.update)
 
 module.exports = productsRoutes
