@@ -34,7 +34,7 @@ class ClientsController {
 
             response.status(201).json(client.rows[0])
 
-        // pega os erros não tratados
+            // pega os erros não tratados
         } catch (error) {
             console.log(error)
             response.status(500).json({
@@ -42,7 +42,40 @@ class ClientsController {
             })
         }
     }
+    //-----------------------------------------------------------------------------------------------
 
+    // LISTANDO CLIENTES
+    async getAll(request, response) {
+
+        try {
+
+            // busca um cliente com filtro
+            const query = request.query
+
+            if (query.filter) {
+                const clients = await conexao.query(`
+                SELECT * FROM clients
+                where name ilike $1
+                or email ilike $1
+                or cpf ilike $1
+                or contact ilike $1
+                `, [`%${query.filter}%`])
+                response.json(clients.rows)
+            }
+            else {
+                //busca todos os clientes
+                const clients = await conexao.query('SELECT * FROM clients')
+                response.json(clients.rows)
+            }
+
+        } catch (error) {
+            console.log(error)
+            response.status(500).json({
+                mensagem: "Ocorreu um erro ao tentar listar os clientes."
+            })
+
+        }
+    }
 }
 
 module.exports = new ClientsController()
