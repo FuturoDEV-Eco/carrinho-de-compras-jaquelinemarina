@@ -100,6 +100,78 @@ class ProductsController {
             })
         }
     }
+    //-----------------------------------------------------------------------------------------------
+
+    // ATUALIZANDO PRODUTO
+    async update(request, response) {
+
+        try {
+            const dados = request.body
+            const id = request.params.id
+
+            // busca todos os dados do produto para manter aqueles que não quero atualizar
+            const dataProduct = await conexao.query(`
+                SELECT * FROM products
+                WHERE id = $1
+                `, [id])
+
+            await conexao.query(`
+            UPDATE products
+            SET name = $1,
+            amount = $2,
+            color = $3,
+            voltage = $4,
+            description = $5,
+            category_id = $6
+            WHERE id = $7
+            RETURNING *
+            `, [// caso não exista dados novos, mantém os antigos
+                dados.name || dataProduct.rows[0].name,
+                dados.amount || dataProduct.rows[0].amount,
+                dados.color || dataProduct.rows[0].color,
+                dados.voltage || dataProduct.rows[0].voltage,
+                dados.description || dataProduct.rows[0].description,
+                dados.category_id || dataProduct.rows[0].category_id,
+                id])
+
+            // retorna o objeto atualizado
+            response.status(201).json(dataProduct.rows[0])
+
+        } catch (error) {
+            console.log(error)
+            response.status(500).json({
+                mensagem: "Ocorreu um erro ao tentar atualizar um produto."
+            })
+        }
+    }
+    //-----------------------------------------------------------------------------------------------
+
+    // DELETANDO PRODUTO
+    async delete(request, response) {
+
+        try {
+            const id = request.params.id
+
+            const products = await conexao.query(`
+                DELETE FROM products
+                WHERE id = $1
+                `, [id])
+
+            // verifica se deletou alguma linha
+            if (products.rowCount === 0) {
+                return response.status(404).json(
+                    { mensagem: "O produto não existe ou já foi deletado." }
+                )
+            }
+            response.status(204).json() // retorna 204 (com sucesso mas sem conteúdo)
+
+        } catch (error) {
+            console.log(error)
+            response.status(500).json({
+                mensagem: "Ocorreu um erro ao tentar deletar um produto."
+            })
+        }
+    }
 }
 
 module.exports = new ProductsController()
