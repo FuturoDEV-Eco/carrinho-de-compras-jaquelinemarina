@@ -14,10 +14,10 @@ class ClientsController {
     async create(request, response) {
 
         try {
-            const dados = request.body
+            const data = request.body
 
             // retorna erro se não tem nome, email, cpf ou contato
-            if (!dados.name || !dados.email || !dados.cpf || !dados.contact) {
+            if (!data.name || !data.email || !data.cpf || !data.contact) {
                 return response.status(400).json({
                     mensagem: "Nome, email (dado único), CPF (dado único) e contato são obrigatórios."
                 })
@@ -30,7 +30,7 @@ class ClientsController {
                 values
                 ($1, $2, $3, $4)
                 RETURNING * 
-                `, [dados.name, dados.email, dados.cpf, dados.contact])
+                `, [data.name, data.email, data.cpf, data.contact])
 
             response.status(201).json(client.rows[0])
 
@@ -64,14 +64,55 @@ class ClientsController {
             else {
                 //busca todos os clientes
                 const clients = await conexao.query('SELECT * FROM clients')
-                response.json(clients.rows)
+                response.status(201).json(clients.rows)
             }
         } catch (error) {
             console.log(error)
             response.status(500).json({
                 mensagem: "Ocorreu um erro ao tentar listar os clientes."
             })
+        }
+    }
+    //-----------------------------------------------------------------------------------------------
 
+    // ATUALIZANDO CLIENTE
+    async update(request, response) {
+
+        try {
+            // pra atualizar precisa do corpo e do id
+            const data = request.body
+            const id = request.params.id
+
+            // busca todos os dados do cliente pra manter aqueles que não quero atualizar
+            const dataClients = await conexao.query(`
+                SELECT * FROM clients
+                WHERE id = $1
+                `, [id])
+
+            await conexao.query(`
+                UPDATE clients
+                SET name = $1,
+                email = $2,
+                cpf = $3,
+                contact = $4
+                WHERE id = $5
+                `, [
+                // se não tiver dados novos, mantém os antigos
+                data.name || dataClients.rows[0].name,
+                data.email || dataClients.rows[0].email,
+                data.cpf || dataClients.rows[0].cpf,
+                data.contact || dataClients.rows[0].contact,
+                id])
+
+            response.status(201).json({
+                mensagem: "Cliente atualizado com sucesso."
+            })
+
+        } catch (error) { // pega os erros não tratados
+            console.log(error)
+            response.status(500).json({
+                mensagem: "Ocorreu um erro ao tentar atualizar um cliente."
+            })
         }
     }
     //-----------------------------------------------------------------------------------------------
