@@ -8,18 +8,18 @@ class ProductsController extends Database {
             const dados = request.body
 
             // retorna erro se não tem nome, quantidade ou id da categoria
-            if (!dados.name || !dados.amount || !dados.category_id) {
+            if (!dados.name || !dados.amount || !dados.price || !dados.category_id) {
                 return response.status(400).json({
-                    mensagem: "Nome, quantidade e ID da categoria são obrigatórios."
+                    mensagem: "Nome, quantidade, preço e ID da categoria são obrigatórios."
                 })
             }
 
             // caso contrário insere o produto
             const product = await this.database.query(`
             INSERT INTO products
-            (name, amount, color, voltage, description, category_id)
+            (name, amount, color, voltage, description, price, category_id)
             values
-            ($1, $2, $3, $4, $5, $6)
+            ($1, $2, $3, $4, $5, $6, $7)
             RETURNING * 
             `, [
                 dados.name,
@@ -27,6 +27,7 @@ class ProductsController extends Database {
                 dados.color,
                 dados.voltage,
                 dados.description,
+                dados.price,
                 dados.category_id])
 
             response.status(201).json(product.rows[0]) // retorna o objeto criado (RETURNING * também)
@@ -65,6 +66,7 @@ class ProductsController extends Database {
               p.color,
               p.voltage,
               p.description,
+              p.price
               c.id AS category_id,
               c.name AS category_name
             FROM 
@@ -113,8 +115,9 @@ class ProductsController extends Database {
             color = $3,
             voltage = $4,
             description = $5,
-            category_id = $6
-            WHERE id = $7
+            price = $6,
+            category_id = $7
+            WHERE id = $8
             RETURNING *
             `, [// caso não exista dados novos, mantém os antigos
                 dados.name || dataProduct.rows[0].name,
@@ -122,6 +125,7 @@ class ProductsController extends Database {
                 dados.color || dataProduct.rows[0].color,
                 dados.voltage || dataProduct.rows[0].voltage,
                 dados.description || dataProduct.rows[0].description,
+                dados.price || dataProduct.rows[0].price,
                 dados.category_id || dataProduct.rows[0].category_id,
                 id])
 
