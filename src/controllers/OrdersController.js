@@ -61,6 +61,40 @@ class OrdersController extends Database {
             })
         }
     }
+    //-----------------------------------------------------------------------------------------------
+
+    // LISTANDO TODOS OS PEDIDOS
+    async getAll(request, response) {
+
+        const orders = await this.database.query('SELECT * FROM orders')
+        response.status(200).json(orders.rows)
+    }
+    //-----------------------------------------------------------------------------------------------
+
+    // DELETANDO PEDIDO
+    async delete(request, response) {
+        try {
+            const id = request.params.id
+
+            await this.database.query('DELETE FROM orders_items WHERE order_id = $1', [id])
+            const orders = await this.database.query('DELETE FROM orders WHERE id = $1', [id])
+
+
+            // verifica se deletou alguma linha
+            if (orders.rowCount === 0) {
+                return response.status(404).json(
+                    { mensagem: "O pedido não existe ou já foi deletado." }
+                )
+            }
+            response.status(200).json({ mensagem: "Pedido deletado com sucesso." })
+
+        } catch (error) {
+            console.log(error)
+            response.status(500).json({
+                mensagem: "Ocorreu um erro ao tentar deletar o pedido."
+            })
+        }
+    }
 }
 
 module.exports = new OrdersController()
