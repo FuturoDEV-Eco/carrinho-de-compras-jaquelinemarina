@@ -1,14 +1,6 @@
-const { Pool } = require('pg')
+const Database = require('../database/database')
 
-const conexao = new Pool({
-    host: 'localhost',
-    port: 5432,
-    user: 'postgres',
-    password: 'Abacaxi123$',
-    database: 'M2S06'
-})
-
-class ClientsController {
+class ClientsController extends Database{
 
     // CRIANDO CLIENTE
     async create(request, response) {
@@ -24,7 +16,7 @@ class ClientsController {
             }
 
             // caso contrário insere o cliente
-            const client = await conexao.query(`
+            const client = await this.database.query(`
                 INSERT INTO clients
                 (name, email, cpf, contact)
                 values
@@ -52,7 +44,7 @@ class ClientsController {
             const query = request.query
 
             if (query.filter) {
-                const clients = await conexao.query(`
+                const clients = await this.database.query(`
                 SELECT * FROM clients
                 where name ilike $1
                 or email ilike $1
@@ -63,7 +55,7 @@ class ClientsController {
             }
             else {
                 //busca todos os clientes
-                const clients = await conexao.query('SELECT * FROM clients')
+                const clients = await this.database.query('SELECT * FROM clients')
                 response.status(201).json(clients.rows)
             }
         } catch (error) {
@@ -84,12 +76,12 @@ class ClientsController {
             const id = request.params.id
 
             // busca todos os dados do cliente pra manter aqueles que não quero atualizar
-            const dataClients = await conexao.query(`
+            const dataClients = await this.database.query(`
                 SELECT * FROM clients
                 WHERE id = $1
                 `, [id])
 
-            await conexao.query(`
+            await this.database.query(`
                 UPDATE clients
                 SET name = $1,
                 email = $2,
@@ -123,7 +115,7 @@ class ClientsController {
         try {
             const id = request.params.id
 
-            const clients = await conexao.query(`
+            const clients = await this.database.query(`
                 DELETE FROM clients
                 WHERE id = $1
                 `, [id])

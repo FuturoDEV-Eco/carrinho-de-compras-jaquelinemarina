@@ -1,14 +1,5 @@
-const { Pool } = require('pg')
-
-const conexao = new Pool({
-    host: 'localhost',
-    port: 5432,
-    user: 'postgres',
-    password: 'Abacaxi123$',
-    database: 'M2S06'
-})
-
-class ProductsController {
+const Database = require('../database/database')
+class ProductsController extends Database {
 
     // CRIANDO PRODUTO
     async create(request, response) {
@@ -24,7 +15,7 @@ class ProductsController {
             }
 
             // caso contrário insere o produto
-            const product = await conexao.query(`
+            const product = await this.database.query(`
             INSERT INTO products
             (name, amount, color, voltage, description, category_id)
             values
@@ -52,7 +43,7 @@ class ProductsController {
     // LISTANDO TODOS OS PRODUTOS
     async getAll(request, response) {
 
-        const products = await conexao.query('SELECT * FROM products')
+        const products = await this.database.query('SELECT * FROM products')
         response.status(200).json(products.rows)
 
     }
@@ -83,7 +74,7 @@ class ProductsController {
             WHERE 
               p.id = $1
           `
-            const result = await conexao.query(query, [id])
+            const result = await this.database.query(query, [id])
 
             // verificar se os dados foram encontrados
             if (result.rowCount === 0) {
@@ -110,12 +101,12 @@ class ProductsController {
             const id = request.params.id
 
             // busca todos os dados do produto para manter aqueles que não quero atualizar
-            const dataProduct = await conexao.query(`
+            const dataProduct = await this.database.query(`
                 SELECT * FROM products
                 WHERE id = $1
                 `, [id])
 
-            await conexao.query(`
+            await this.database.query(`
             UPDATE products
             SET name = $1,
             amount = $2,
@@ -152,7 +143,7 @@ class ProductsController {
         try {
             const id = request.params.id
 
-            const products = await conexao.query(`
+            const products = await this.database.query(`
                 DELETE FROM products
                 WHERE id = $1
                 `, [id])
