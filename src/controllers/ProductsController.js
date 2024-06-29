@@ -1,14 +1,5 @@
-const { Pool } = require('pg')
-
-const conexao = new Pool({
-    host: 'localhost',
-    port: 5432,
-    user: 'postgres',
-    password: 'Abacaxi123$',
-    database: 'M2S06'
-})
-
-class ProductsController {
+const Database = require('../database/database')
+class ProductsController extends Database {
 
     // CRIANDO PRODUTO
     async create(request, response) {
@@ -17,18 +8,18 @@ class ProductsController {
             const dados = request.body
 
             // retorna erro se não tem nome, quantidade ou id da categoria
-            if (!dados.name || !dados.amount || !dados.category_id) {
+            if (!dados.name || !dados.amount || !dados.price || !dados.category_id) {
                 return response.status(400).json({
-                    mensagem: "Nome, quantidade e ID da categoria são obrigatórios."
+                    mensagem: "Nome, quantidade, preço e ID da categoria são obrigatórios."
                 })
             }
 
             // caso contrário insere o produto
-            const product = await conexao.query(`
+            const product = await this.database.query(`
             INSERT INTO products
-            (name, amount, color, voltage, description, category_id)
+            (name, amount, color, voltage, description, price, category_id)
             values
-            ($1, $2, $3, $4, $5, $6)
+            ($1, $2, $3, $4, $5, $6, $7)
             RETURNING * 
             `, [
                 dados.name,
@@ -36,6 +27,7 @@ class ProductsController {
                 dados.color,
                 dados.voltage,
                 dados.description,
+                dados.price,
                 dados.category_id])
 
             response.status(201).json(product.rows[0]) // retorna o objeto criado (RETURNING * também)
@@ -52,7 +44,7 @@ class ProductsController {
     // LISTANDO TODOS OS PRODUTOS
     async getAll(request, response) {
 
-        const products = await conexao.query('SELECT * FROM products')
+        const products = await this.database.query('SELECT * FROM products')
         response.status(200).json(products.rows)
 
     }
@@ -74,6 +66,7 @@ class ProductsController {
               p.color,
               p.voltage,
               p.description,
+              p.price
               c.id AS category_id,
               c.name AS category_name
             FROM 
@@ -83,7 +76,7 @@ class ProductsController {
             WHERE 
               p.id = $1
           `
-            const result = await conexao.query(query, [id])
+            const result = await this.database.query(query, [id])
 
             // verificar se os dados foram encontrados
             if (result.rowCount === 0) {
@@ -110,20 +103,21 @@ class ProductsController {
             const id = request.params.id
 
             // busca todos os dados do produto para manter aqueles que não quero atualizar
-            const dataProduct = await conexao.query(`
+            const dataProduct = await this.database.query(`
                 SELECT * FROM products
                 WHERE id = $1
                 `, [id])
 
-            await conexao.query(`
+            await this.database.query(`
             UPDATE products
             SET name = $1,
             amount = $2,
             color = $3,
             voltage = $4,
             description = $5,
-            category_id = $6
-            WHERE id = $7
+            price = $6,
+            category_id = $7
+            WHERE id = $8
             RETURNING *
             `, [// caso não exista dados novos, mantém os antigos
                 dados.name || dataProduct.rows[0].name,
@@ -131,6 +125,7 @@ class ProductsController {
                 dados.color || dataProduct.rows[0].color,
                 dados.voltage || dataProduct.rows[0].voltage,
                 dados.description || dataProduct.rows[0].description,
+                dados.price || dataProduct.rows[0].price,
                 dados.category_id || dataProduct.rows[0].category_id,
                 id])
 
@@ -152,7 +147,7 @@ class ProductsController {
         try {
             const id = request.params.id
 
-            const products = await conexao.query(`
+            const products = await this.database.query(`
                 DELETE FROM products
                 WHERE id = $1
                 `, [id])
